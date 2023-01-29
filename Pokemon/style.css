@@ -1,0 +1,19 @@
+.pokemon-container{
+    display: flex;
+    justify-content: space-around;
+}
+
+.button-container{
+    display: flex;
+    justify-content: space-around;
+}
+
+.button{
+    width: 400px;
+    height: 200px;
+}
+
+.unseeButton{
+    width: 100px;
+    height: 100px;
+}
