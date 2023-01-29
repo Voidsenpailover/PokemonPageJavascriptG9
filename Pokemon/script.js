@@ -1,9 +1,18 @@
+function getRandomInt(max) {
+    return Math.floor(Math.random() * max);
+}
+
+var allyHP = document.getElementById('hp-ally');
+var ennemyHP = document.getElementById('hp-ennemy');
+
 var attackButton = document.querySelector("#BATK");
 var pokemonButton = document.querySelector("#BPOK");
 var pokemonAttack = document.getElementById('poATK')
 
 let checkA = false;
 let checkP = false;
+
+let tempPokemon;
 
 class Type {
     constructor(index, nom) {
@@ -33,13 +42,6 @@ class Pokemon {
         poke.LifeP -= attaque.Degats;
     }
 
-    affichage() {
-        console.log("Nom : ", this.Name, ",", "Points de vie : ", this.LifeP, ",", "Type : ", this.Type.Name)
-        console.log("Attaques :")
-        for (let element in this.Attaques) {
-            console.log(parseInt(element) + 1, this.Attaques[element].Name, ",", "Dégats : ", this.Attaques[element].Degats, ",", "Type : ", this.Attaques[element].Type.Name)
-        }
-    }
 }
 
 let typeFeu = new Type(0, 'Feu');
@@ -57,10 +59,14 @@ let attaque2 = new Attaque('Danse Flammes', 45, typeFeu);
 let attaque3 = new Attaque("Feu d'Enfer", 70, typeFeu);
 let attaque4 = new Attaque('Boutefeu', 100, typeFeu);
 
+let attaqueF = new Attaque('Charge Trinité', 40, typeFeu);
+
 poke2.Attaques.push(attaque1);
 poke1.Attaques.push(attaque2);
 poke1.Attaques.push(attaque3);
 poke1.Attaques.push(attaque4);
+
+pokeF.Attaques.push(attaqueF);
 
 console.log("test-------------------------");
 
@@ -73,20 +79,18 @@ const prompt=require("prompt-sync")({sigint:true});
 
 /*Tour*/
 /*attaque*/
-function tourAttaque(pokemon) {
-    console.log("=======================================");
-    pokemon.affichage();
-    console.log("=======================================");
-    let numAttaque = prompt("Choisir le numéro de votre attaque : ")
-    console.log("Vous avez choisi l'attaque numéro ", numAttaque);
-    console.log();
-    console.log("Vous infligez ", pokemon.Attaques[numAttaque - 1].Degats, "points de dégats");
-    pokemon.attaque(pokemon.Attaques[numAttaque - 1], pokeF);
-    console.log("Il reste ", pokeF.LifeP, "points de vie à", pokeF.Name);
-    console.log();
+function tourAttaque(numATK) {
+    pokeArray[tempPokemon].attaque(pokeArray[tempPokemon].Attaques[numATK], pokeF);
+    for (let i = 0; i < pokeArray[tempPokemon].Attaques.length; i++) {
+        var tempButton = document.getElementById("atk" + (i + 1));
+        tempButton.remove();
+    }
+    tourAdverse();
+    refreshHP();
+    checkA = false;
 }
 /*pokemon*/
-function testWOW(i) {
+function chooseComplete(i) {
     tempPokemon = i;
     for (let i = 0; i < pokeArray.length; i++) {
         var temporaryButton = document.getElementById("pok" + (i + 1));
@@ -98,12 +102,22 @@ function testWOW(i) {
 }
 
 function refreshHP() {
-    var allyHP = document.getElementById('hp-ally');
     allyHP.innerHTML = "hp : " + pokeArray[tempPokemon].LifeP;
-    var ennemyHP = document.getElementById('hp-ennemy');
     ennemyHP.innerHTML = "hp : " + pokeF.LifeP;
     allyHP.style.color = 'blue';
     ennemyHP.style.color = 'red';
+    if ((pokeArray[tempPokemon].LifeP <= 0)){
+        allyHP.innerHTML = "Vous avez perdu !";
+        ennemyHP.innerHTML = "Gagnant";
+        allyHP.style.color = 'black';
+        ennemyHP.style.color = 'yellow';
+    }
+    else if (pokeF.LifeP <= 0){
+        allyHP.innerHTML = "Vous avez gagné !";
+        ennemyHP.innerHTML = "MORT";
+        allyHP.style.color = 'yellow';
+        ennemyHP.style.color = 'black';
+    };
 
 }
 
@@ -112,19 +126,26 @@ function tourPokemon() {
     for (let element in pokeArray) {
         i = i + 1;
         let counterPok = "pok" + i;
-        let functionPok = "testWOW(" + (i - 1) + ")";
+        let functionPok = "chooseComplete(" + (i - 1) + ")";
         let attackName = parseInt(element) + 1;
         attackName.toString;
         let attackName2 = pokeArray[element].Name;
         attackName2.toString;
         attackName = attackName + attackName2
-        attackButton.insertAdjacentHTML("beforebegin", '<button onclick = "" id="test5" class="unseeButton"></button>');
-        var tempButtonPok = document.querySelector('#test5')
+        attackButton.insertAdjacentHTML("beforebegin", '<button onclick = "" id="pokechoose" class="unseeButton"></button>');
+        var tempButtonPok = document.querySelector('#pokechoose')
         tempButtonPok.innerHTML = attackName;
         tempButtonPok.setAttribute('id', counterPok);
         tempButtonPok.setAttribute('onclick', functionPok);
     }
-    
+
+}
+
+function tourAdverse() {
+    if (pokeF.LifeP > 0) {
+        pokeF.attaque(pokeF.Attaques[getRandomInt(pokeF.Attaques.length)], pokeArray[tempPokemon]);
+    }
+
 }
 
 
@@ -132,10 +153,16 @@ function tourPokemon() {
 /* attack*/
 attackButton.addEventListener('click', (event) => {
     if (checkA == false && checkP == false) {
-        attackButton.insertAdjacentHTML("afterend", '<button id="test" class="unseeButton">Attaque 1</button>');
-        attackButton.insertAdjacentHTML("afterend", '<button id="test2" class="unseeButton">Attaque 2</button>');
-        attackButton.insertAdjacentHTML("afterend", '<button id="test3" class="unseeButton">Attaque 3</button>');
-        attackButton.insertAdjacentHTML("afterend", '<button id="test4" class="unseeButton">Attaque 4</button>');
+        for (let i = 0; i < pokeArray[tempPokemon].Attaques.length; i++) {
+            let attackName = (i + 1) + " Nom : " + pokeArray[tempPokemon].Attaques[i].Name + " Dégats : " + pokeArray[tempPokemon].Attaques[i].Degats + " Type : " + pokeArray[tempPokemon].Attaques[i].Type.Name;
+            let counterPok = "atk" + (i + 1);
+            let functionPok = "tourAttaque(" + i + ")";
+            attackButton.insertAdjacentHTML("afterend", '<button id="pokeattack" class="unseeButton" onclick = "" ></button>');
+            var tempButtonPok = document.querySelector('#pokeattack');
+            tempButtonPok.innerHTML = attackName;
+            tempButtonPok.setAttribute('id', counterPok);
+            tempButtonPok.setAttribute('onclick', functionPok);
+        }
         checkA = true;
     }
 });
@@ -159,23 +186,3 @@ pokemonButton.addEventListener('click', (event) => {
         checkP = true;
     }
 });
-
-let tempPokemon;
-
-
-
-/* Match*/
-/*
-
-tourAttaque(pokeArray[tempPokemon]);
-while (pokeArray.length>0 && pokeF.LifeP > 0){
-   let tourChoice = prompt("1 Attaque, 2 Choix pokemon");
-   if (tourChoice == "1"){
-    tourAttaque(pokeArray[tempPokemon]);
-   }
-   else if (tourChoice == "2"){
-    tempPokemon = tourPokemon();
-   }
-}
-*/
-
